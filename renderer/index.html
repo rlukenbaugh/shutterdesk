@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShutterDesk</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: #0b0e14;
+      color: #f1f5f9;
+      display: grid;
+      grid-template-columns: 270px 1fr;
+      height: 100vh;
+      overflow: hidden;
+    }
+    aside {
+      background: #121721;
+      border-right: 1px solid #1e293b;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+    .meta { font-size: 12px; color: #94a3b8; }
+    .btn {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #f8fafc;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+    }
+    .btn:hover { background: #273549; }
+    .btn.primary { background: #2563eb; border-color: #2563eb; }
+    .btn.primary:hover { background: #1d4ed8; }
+    .btn.danger { background: #dc2626; border-color: #dc2626; }
+    main {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+    }
+    .sources {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 12px;
+    }
+    .source-card {
+      background: #121721;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 8px;
+      cursor: pointer;
+    }
+    .source-card.selected { border-color: #3b82f6; }
+    .source-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 4px; background: #020617; }
+    .source-card span { display: block; margin-top: 6px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stage {
+      flex: 1;
+      min-height: 320px;
+      background: #070a0f;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    video, img.preview { max-width: 100%; max-height: 100%; }
+    #status { font-family: Consolas, monospace; font-size: 12px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <aside>
+    <div>
+      <h1>ShutterDesk</h1>
+      <p class="meta">Windows Desktop Capture Utility</p>
+    </div>
+    <button id="btnRefresh" class="btn">Refresh Displays & Windows</button>
+    <button id="btnScreenshot" class="btn primary">Capture Screenshot (Ctrl + Shift + S)</button>
+    <button id="btnRecord" class="btn">Start Screen Recording (Ctrl + Shift + R)</button>
+    <button id="btnOpenFolder" class="btn">Open Captures Folder</button>
+    <div style="margin-top: auto;">
+      <p id="status">Ready</p>
+    </div>
+  </aside>
+  <main>
+    <div class="sources" id="sourcesGrid"></div>
+    <div class="stage" id="stage">
+      <p class="meta">Select a screen or window above, then click Capture Screenshot or Start Recording.</p>
+    </div>
+  </main>
+  <script src="./app.js"></script>
+</body>
+</html>
