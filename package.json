@@ -10,8 +10,8 @@
     "start": "electron .",
     "check": "node --check electron/main.cjs && node --check electron/preload.cjs && node --check electron/region-preload.cjs && node --check renderer/app.js && node --check renderer/region.js",
     "generate:icons": "node scripts/generate-icons.mjs",
-    "dist:win": "electron-builder --win nsis",
-    "dist:portable": "electron-builder --win portable"
+    "dist:win": "electron-builder --win nsis --publish never",
+    "dist:portable": "electron-builder --win portable --publish never"
   },
   "engines": {
     "node": ">=20"
