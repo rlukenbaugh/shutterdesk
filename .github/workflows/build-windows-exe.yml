@@ -1,12 +1,21 @@
 name: Build Windows Installer (.exe)
 
+# Builds every way of installing ShutterDesk on a real Windows machine, installs each one
+# silently and checks that Windows Start search will find it (the Start menu shortcut exists
+# and points at a real ShutterDesk.exe). The installers are attached to each run as artifacts.
+
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
 
 jobs:
-  build-windows-exe:
+  electron:
+    name: Electron app (NSIS installer)
     runs-on: windows-latest
     steps:
       - name: Checkout repository
@@ -15,16 +24,135 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Build ShutterDesk-Setup-1.0.0.exe
+      - name: Syntax check
+        run: npm run check
+
+      - name: Build ShutterDesk-Setup.exe
         run: npm run dist:win
+        env:
+          # No code-signing certificate is configured; build unsigned without looking for one.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
-      - name: Upload Windows .exe Installer Artifact
+      - name: Install silently and check the Start menu shortcut
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem dist -Filter 'ShutterDesk-Setup-*.exe' | Select-Object -First 1
+          if (-not $setup) { throw 'No installer was built.' }
+          Write-Host "Installing $($setup.Name)"
+          $p = Start-Process -FilePath $setup.FullName -ArgumentList '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Installer exit code $($p.ExitCode)" }
+
+          $programs = [Environment]::GetFolderPath('Programs')
+          $lnk = Join-Path $programs 'ShutterDesk.lnk'
+          if (-not (Test-Path $lnk)) {
+            Get-ChildItem $programs -Recurse | Where-Object Name -like '*hutter*' | Format-List FullName
+            throw "Start menu shortcut missing: $lnk"
+          }
+          $target = (New-Object -ComObject WScript.Shell).CreateShortcut($lnk).TargetPath
+          if (-not (Test-Path $target)) { throw "Shortcut points at a missing file: $target" }
+          Write-Host "OK: $lnk -> $target"
+
+          # Start the installed app and make sure it stays up and opens its window.
+          $app = Start-Process -FilePath $target -PassThru
+          Start-Sleep -Seconds 8
+          $running = Get-Process -Name ShutterDesk -ErrorAction SilentlyContinue
+          if (-not $running) { throw 'ShutterDesk exited right after starting.' }
+          $titles = $running | Where-Object MainWindowTitle | ForEach-Object MainWindowTitle
+          Write-Host "Running ShutterDesk processes: $($running.Count); window titles: $($titles -join ', ')"
+          if ($titles -notcontains 'ShutterDesk') { throw 'The ShutterDesk window did not open.' }
+          $running | Stop-Process -Force
+
+      - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: shutterdesk-windows-installer-1.0.0
-          path: dist/*.exe
+          name: ShutterDesk-Setup
+          path: dist/ShutterDesk-Setup-*.exe
+          if-no-files-found: error
+
+  native:
+    name: Native edition (no-download installer + Inno Setup installer)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compile with the C# compiler built into Windows
+        shell: pwsh
+        run: |
+          $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+          New-Item -ItemType Directory -Force native-csharp\build | Out-Null
+          & $csc /nologo /target:winexe /optimize+ /warnaserror+ /win32icon:assets\icon.ico `
+            /out:native-csharp\build\ShutterDesk.exe `
+            /reference:System.Windows.Forms.dll /reference:System.Drawing.dll `
+            native-csharp\ShutterDeskNative.cs
+          if ($LASTEXITCODE -ne 0) { throw 'csc.exe failed' }
+
+      - name: Run INSTALL-NATIVE-SHUTTERDESK.bat and check the Start menu
+        shell: pwsh
+        run: |
+          cmd /c "native-csharp\INSTALL-NATIVE-SHUTTERDESK.bat /quiet"
+          if ($LASTEXITCODE -ne 0) { throw "Installer script exit code $LASTEXITCODE" }
+          $lnk = Join-Path ([Environment]::GetFolderPath('Programs')) 'ShutterDesk.lnk'
+          if (-not (Test-Path $lnk)) { throw "Start menu shortcut missing: $lnk" }
+          $target = (New-Object -ComObject WScript.Shell).CreateShortcut($lnk).TargetPath
+          if (-not (Test-Path $target)) { throw "Shortcut points at a missing file: $target" }
+          $uninstall = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\ShutterDesk'
+          if (-not (Test-Path $uninstall)) { throw 'No entry in Settings > Apps' }
+          Write-Host "OK: $lnk -> $target"
+
+          $app = Start-Process -FilePath $target -PassThru
+          Start-Sleep -Seconds 5
+          if ($app.HasExited) { throw "ShutterDesk exited right away (code $($app.ExitCode))" }
+          Stop-Process -Id $app.Id -Force
+
+          # Uninstall the way Settings > Apps does and check everything is gone.
+          $cmd = (Get-ItemProperty $uninstall).UninstallString
+          cmd /c $cmd
+          Start-Sleep -Seconds 2
+          if (Test-Path $lnk) { throw 'Uninstall left the Start menu shortcut behind' }
+          if (Test-Path $uninstall) { throw 'Uninstall left the Settings > Apps entry behind' }
+          if (Test-Path "$env:LOCALAPPDATA\Programs\ShutterDesk") { throw 'Uninstall left the program folder behind' }
+          Write-Host 'Uninstall OK'
+
+      - name: Build the Inno Setup installer
+        shell: pwsh
+        run: |
+          $iscc = Get-Command iscc.exe -ErrorAction SilentlyContinue
+          if (-not $iscc) {
+            $candidates = @("${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe")
+            $found = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+            if (-not $found) {
+              choco install innosetup -y --no-progress | Out-Host
+              $found = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+            }
+            $iscc = $found
+          } else { $iscc = $iscc.Source }
+          & $iscc installer\ShutterDesk.iss
+          if ($LASTEXITCODE -ne 0) { throw 'ISCC failed' }
+
+      - name: Install the Inno Setup installer silently and check the Start menu
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem dist -Filter 'ShutterDesk-Native-Setup-*.exe' | Select-Object -First 1
+          $p = Start-Process $setup.FullName -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/CURRENTUSER' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Installer exit code $($p.ExitCode)" }
+          $lnk = Join-Path ([Environment]::GetFolderPath('Programs')) 'ShutterDesk.lnk'
+          if (-not (Test-Path $lnk)) { throw "Start menu shortcut missing: $lnk" }
+          $target = (New-Object -ComObject WScript.Shell).CreateShortcut($lnk).TargetPath
+          if (-not (Test-Path $target)) { throw "Shortcut points at a missing file: $target" }
+          Write-Host "OK: $lnk -> $target"
+
+      - name: Upload native installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShutterDesk-Native
+          path: |
+            dist/ShutterDesk-Native-Setup-*.exe
+            native-csharp/build/ShutterDesk.exe
+          if-no-files-found: error

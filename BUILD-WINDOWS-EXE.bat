@@ -1,43 +1,53 @@
 @echo off
 setlocal
-title Building ShutterDesk Windows Installer (.exe)
+title Building the ShutterDesk Windows installer
+cd /d "%~dp0"
 
 echo ============================================================
-echo   ShutterDesk v1.0.0 - Windows .exe Installer Builder
+echo   ShutterDesk - Windows installer builder
 echo ============================================================
 echo.
 
 where node >nul 2>nul
 if errorlevel 1 (
-  echo [ERROR] Node.js is required to compile the Electron NSIS installer.
-  echo Download Node.js LTS from https://nodejs.org/ and re-run this script.
+  echo [ERROR] Node.js is needed to build the full installer.
+  echo Download Node.js LTS from https://nodejs.org/ and run this file again.
   echo.
-  echo TIP: Want a zero-dependency .exe installed to your Start Menu right now?
-  echo Run: native-csharp\INSTALL-NATIVE-SHUTTERDESK.bat
+  echo TIP: For the smaller version that needs no downloads, run
+  echo      native-csharp\INSTALL-NATIVE-SHUTTERDESK.bat
   pause
   exit /b 1
 )
 
-echo [1/3] Installing dependencies...
-call npm install
+echo [1/3] Installing build tools...
+if exist package-lock.json (
+  call npm ci
+) else (
+  call npm install
+)
 if errorlevel 1 (
-  echo [ERROR] npm install failed.
+  echo [ERROR] Installing the build tools failed. Check your internet connection.
   pause
   exit /b 1
 )
 
 echo.
-echo [2/3] Compiling Windows NSIS installer (ShutterDesk-Setup-1.0.0.exe)...
+echo [2/3] Building the installer...
+set "CSC_IDENTITY_AUTO_DISCOVERY=false"
 call npm run dist:win
 if errorlevel 1 (
   echo [ERROR] electron-builder failed.
+  echo If the message above says "Cannot create symbolic link", turn on Developer Mode
+  echo ^(Settings ^> System ^> For developers^) or run this file as administrator once.
+  echo You can also build in the cloud: push to GitHub and download the installer from
+  echo the "Build Windows Installer (.exe)" workflow run.
   pause
   exit /b 1
 )
 
 echo.
-echo [3/3] Build complete!
-echo Installer location: %~dp0dist\ShutterDesk-Setup-1.0.0.exe
-echo After running the installer, press Start and type "ShutterDesk" to launch it.
+echo [3/3] Done.
+for %%F in ("dist\ShutterDesk-Setup-*.exe") do echo Installer: %%~fF
+echo Run the installer, then press the Windows key and type "ShutterDesk".
 explorer "%~dp0dist"
 pause
