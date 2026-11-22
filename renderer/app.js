@@ -138,7 +138,7 @@ async function getDesktopStream(sourceId) {
 function setRecordingUi(recording) {
   btnRecord.replaceChildren(
     document.createTextNode(recording ? 'Stop recording ' : 'Start recording '),
-    Object.assign(document.createElement('kbd'), { textContent: 'Ctrl+Shift+R' })
+    Object.assign(document.createElement('kbd'), { textContent: 'Ctrl+Alt+Shift+R' })
   );
   btnRecord.classList.toggle('danger', recording);
 }
@@ -210,7 +210,7 @@ async function toggleRecording() {
   showInStage(live);
 
   setRecordingUi(true);
-  setStatus('Recording... press Ctrl+Shift+R or Stop recording to finish.');
+  setStatus('Recording... press Ctrl+Alt+Shift+R or Stop recording to finish.');
 }
 
 document.getElementById('btnRefresh').onclick = loadSources;

@@ -22,9 +22,9 @@ const APP_ID = 'com.shutterdesk.capture';
 const ASSETS = path.join(__dirname, '..', 'assets');
 
 const CONFIG = {
-  hotkeyFullscreen: 'CommandOrControl+Shift+S',
-  hotkeyRegion: 'CommandOrControl+Shift+A',
-  hotkeyRecord: 'CommandOrControl+Shift+R',
+  hotkeyFullscreen: 'CommandOrControl+Alt+Shift+S',
+  hotkeyRegion: 'CommandOrControl+Alt+Shift+A',
+  hotkeyRecord: 'CommandOrControl+Alt+Shift+R',
   minimizeToTray: true,
   autoCopyToClipboard: true,
   defaultImageFormat: 'png',

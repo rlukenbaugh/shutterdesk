@@ -43,10 +43,12 @@
       cursor: pointer;
       text-align: left;
       display: flex;
-      justify-content: space-between;
-      gap: 8px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
     }
-    .btn kbd { font: 11px Consolas, monospace; color: #94a3b8; align-self: center; }
+    .sources > p { grid-column: 1 / -1; }
+    .btn kbd { font: 11px Consolas, monospace; color: #94a3b8; }
     .btn.primary kbd, .btn.danger kbd { color: #dbeafe; }
     .btn:hover { background: #273549; }
     .btn:focus-visible, .source-card:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
@@ -116,14 +118,14 @@
         <p class="meta" id="version">Screenshot and screen recording</p>
       </div>
     </div>
-    <button id="btnScreenshot" class="btn primary">Capture selected <kbd>Ctrl+Shift+S</kbd></button>
-    <button id="btnRegion" class="btn">Capture a region <kbd>Ctrl+Shift+A</kbd></button>
-    <button id="btnRecord" class="btn">Start recording <kbd>Ctrl+Shift+R</kbd></button>
+    <button id="btnScreenshot" class="btn primary">Capture selected <kbd>Ctrl+Alt+Shift+S</kbd></button>
+    <button id="btnRegion" class="btn">Capture a region <kbd>Ctrl+Alt+Shift+A</kbd></button>
+    <button id="btnRecord" class="btn">Start recording <kbd>Ctrl+Alt+Shift+R</kbd></button>
     <button id="btnRefresh" class="btn">Refresh screens and windows</button>
     <button id="btnOpenFolder" class="btn">Open captures folder</button>
     <p id="hotkeyWarning" class="warning" hidden></p>
     <div class="footer">
-      <p class="meta">Ctrl+Shift+S captures the screen under the mouse. The button captures the screen or window selected on the right.</p>
+      <p class="meta">Ctrl+Alt+Shift+S captures the screen under the mouse. The button captures the screen or window selected on the right.</p>
       <p id="status" role="status" aria-live="polite">Ready</p>
       <button id="btnShowFile" class="btn link" hidden>Show in folder</button>
     </div>

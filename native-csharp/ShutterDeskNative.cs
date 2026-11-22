@@ -20,6 +20,7 @@ namespace ShutterDeskNative
         private const int HOTKEY_FULL = 1;
         private const int HOTKEY_REGION = 2;
         private const uint MOD_CONTROL = 0x0002;
+        private const uint MOD_ALT = 0x0001;
         private const uint MOD_SHIFT = 0x0004;
         private const uint MOD_NOREPEAT = 0x4000;
         private const int SW_RESTORE = 9;
@@ -78,10 +79,10 @@ namespace ShutterDeskNative
                 BackColor = Color.FromArgb(18, 23, 33)
             };
 
-            var btnFull = CreateButton("Capture Full Screen (Ctrl+Shift+S)", true);
+            var btnFull = CreateButton("Capture Full Screen (Ctrl+Alt+Shift+S)", true);
             btnFull.Click += delegate { CaptureFullScreen(); };
 
-            var btnRegion = CreateButton("Capture Region (Ctrl+Shift+A)", false);
+            var btnRegion = CreateButton("Capture Region (Ctrl+Alt+Shift+A)", false);
             btnRegion.Click += delegate { CaptureRegion(); };
 
             var btnOpen = CreateButton("Open Captures Folder", false);
@@ -137,10 +138,10 @@ namespace ShutterDeskNative
             Load += delegate
             {
                 var failed = new System.Collections.Generic.List<string>();
-                if (!RegisterHotKey(Handle, HOTKEY_FULL, MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT, (uint)Keys.S))
-                    failed.Add("Ctrl+Shift+S");
-                if (!RegisterHotKey(Handle, HOTKEY_REGION, MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT, (uint)Keys.A))
-                    failed.Add("Ctrl+Shift+A");
+                if (!RegisterHotKey(Handle, HOTKEY_FULL, MOD_CONTROL | MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, (uint)Keys.S))
+                    failed.Add("Ctrl+Alt+Shift+S");
+                if (!RegisterHotKey(Handle, HOTKEY_REGION, MOD_CONTROL | MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, (uint)Keys.A))
+                    failed.Add("Ctrl+Alt+Shift+A");
                 if (failed.Count > 0)
                 {
                     SetStatus("Another program is already using " + string.Join(" and ", failed.ToArray()) +

@@ -6,9 +6,9 @@ ShutterDesk captures the whole screen, a dragged region, or a single window, sav
 
 | Shortcut | Action |
 |---|---|
-| **Ctrl+Shift+S** | Capture the screen under the mouse |
-| **Ctrl+Shift+A** | Capture a region (drag; Esc or right-click cancels) |
-| **Ctrl+Shift+R** | Start/stop screen recording (full edition only) |
+| **Ctrl+Alt+Shift+S** | Capture the screen under the mouse |
+| **Ctrl+Alt+Shift+A** | Capture a region (drag; Esc or right-click cancels) |
+| **Ctrl+Alt+Shift+R** | Start/stop screen recording (full edition only) |
 
 If another program already uses one of these shortcuts, ShutterDesk says so in its window. The
 buttons and the tray menu always work. Closing the window keeps ShutterDesk running in the
@@ -70,8 +70,11 @@ shortcut is missing or points at a file that does not exist.
 - **App icon:** a camera-aperture icon for the exe, installer, Start menu, taskbar and tray.
   Before, there was no icon, and the tray icon's embedded PNG was corrupt (bad checksum), so the
   tray showed a blank square.
-- **Region capture in the full edition:** Ctrl+Shift+A used to take a full screenshot. It now
-  freezes the screen under the mouse and lets you drag out a region at full resolution.
+- **New shortcuts: Ctrl+Alt+Shift+S / A / R.** The old Ctrl+Shift+S / A / R were taken over in
+  every program while ShutterDesk ran, which broke "Save As" (Ctrl+Shift+S) in many apps and
+  Ctrl+Shift+A in browsers and editors.
+- **Region capture in the full edition:** the region shortcut used to take a full screenshot. It
+  now freezes the screen under the mouse and lets you drag out a region at full resolution.
 - **Native edition:**
   - Sharp, complete captures at 125%/150% display scaling (the app is now DPI-aware).
   - Region capture is correct on multi-monitor setups where a screen sits left of or above the
